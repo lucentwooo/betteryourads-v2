@@ -14,7 +14,31 @@ import type { CrawlResult, CrawledPage } from "@/lib/crawler/types";
 export type CrawlOptions = {
   maxPages?: number;
   timeoutMs?: number;
+  screenshotPages?: "homepage" | "all" | "none";
 };
+
+export function resolveScreenshotPages(
+  value?: string
+): NonNullable<CrawlOptions["screenshotPages"]> {
+  if (value === "all" || value === "none" || value === "homepage") {
+    return value;
+  }
+
+  return "homepage";
+}
+
+export function shouldUseBrowserForPage(
+  url: string,
+  homepageUrl: string,
+  screenshotPages: NonNullable<CrawlOptions["screenshotPages"]>
+) {
+  const pageType = classifyPage(url, homepageUrl);
+
+  return (
+    screenshotPages === "all" ||
+    (screenshotPages === "homepage" && pageType === "homepage")
+  );
+}
 
 function normalizeWebsiteUrl(input: string) {
   const withProtocol = /^https?:\/\//i.test(input) ? input : `https://${input}`;
@@ -126,39 +150,64 @@ function buildCrawledPage(
   };
 }
 
+function buildFailedCrawledPage(
+  url: string,
+  homepageUrl: string,
+  crawlError: string
+): CrawledPage {
+  return {
+    url,
+    pageType: classifyPage(url, homepageUrl),
+    html: "",
+    text: "",
+    headings: [],
+    ctas: [],
+    links: [],
+    metadata: {
+      title: "",
+      description: "",
+      canonicalUrl: url,
+      openGraph: {},
+      twitter: {},
+      schemaTypes: []
+    },
+    assets: [],
+    colors: [],
+    crawlError
+  };
+}
+
 async function crawlSinglePage(
   url: string,
   homepageUrl: string,
-  timeoutMs: number
+  timeoutMs: number,
+  shouldUseBrowser: boolean
 ): Promise<CrawledPage> {
+  if (!shouldUseBrowser) {
+    try {
+      return await fetchPageWithoutBrowser(url, homepageUrl, timeoutMs);
+    } catch (fetchError) {
+      return buildFailedCrawledPage(
+        url,
+        homepageUrl,
+        fetchError instanceof Error ? fetchError.message : "fetch failed"
+      );
+    }
+  }
+
   try {
     return await fetchPageWithBrowser(url, homepageUrl, timeoutMs);
   } catch (browserError) {
     try {
       return await fetchPageWithoutBrowser(url, homepageUrl, timeoutMs);
     } catch (fetchError) {
-      return {
+      return buildFailedCrawledPage(
         url,
-        pageType: classifyPage(url, homepageUrl),
-        html: "",
-        text: "",
-        headings: [],
-        ctas: [],
-        links: [],
-        metadata: {
-          title: "",
-          description: "",
-          canonicalUrl: url,
-          openGraph: {},
-          twitter: {},
-          schemaTypes: []
-        },
-        assets: [],
-        colors: [],
-        crawlError: `${browserError instanceof Error ? browserError.message : "browser failed"}; ${
+        homepageUrl,
+        `${browserError instanceof Error ? browserError.message : "browser failed"}; ${
           fetchError instanceof Error ? fetchError.message : "fetch failed"
         }`
-      };
+      );
     }
   }
 }
@@ -169,6 +218,8 @@ export async function crawlWebsite(
 ): Promise<CrawlResult> {
   const maxPages = options.maxPages ?? Number(process.env.MAX_CRAWL_PAGES ?? 18);
   const timeoutMs = options.timeoutMs ?? Number(process.env.CRAWL_TIMEOUT_MS ?? 15000);
+  const screenshotPages =
+    options.screenshotPages ?? resolveScreenshotPages(process.env.CRAWL_SCREENSHOT_PAGES);
   const normalizedUrl = normalizeWebsiteUrl(websiteUrl);
   const queue = [normalizedUrl];
   const visited = new Set<string>();
@@ -188,7 +239,17 @@ export async function crawlWebsite(
       continue;
     }
 
-    const page = await crawlSinglePage(nextUrl, normalizedUrl, timeoutMs);
+    const shouldUseBrowser = shouldUseBrowserForPage(
+      nextUrl,
+      normalizedUrl,
+      screenshotPages
+    );
+    const page = await crawlSinglePage(
+      nextUrl,
+      normalizedUrl,
+      timeoutMs,
+      shouldUseBrowser
+    );
     pages.push(page);
 
     if (page.crawlError) {

@@ -7,7 +7,7 @@
   - crawler
   - page classifier
   - content cleaner
-  - screenshot extractor
+  - screenshot extractor, homepage-only by default
   - metadata extractor
   - colour extractor
   - asset extractor

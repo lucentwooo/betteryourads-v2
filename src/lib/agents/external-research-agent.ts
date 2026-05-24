@@ -1,19 +1,54 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { z } from "zod";
+import {
+  inferJsonSchema,
+  isOpenRouterConfigured,
+  requestStructuredJson
+} from "@/lib/agents/openrouter-json";
+import { logger } from "@/lib/logging/logger";
 import type { BrandExtractionJson } from "@/lib/schema/brand-extraction";
+
+const StringArraySchema = z.array(z.unknown());
+
+const ExternalResearchOutputSchema = z
+  .object({
+    external_customer_research_plan: z
+      .object({
+        recommended_subreddits: StringArraySchema,
+        review_sites: StringArraySchema,
+        communities: StringArraySchema,
+        search_queries: StringArraySchema,
+        competitor_review_targets: StringArraySchema,
+        what_to_extract: StringArraySchema
+      })
+      .strict(),
+    competitor_intelligence: z
+      .object({
+        direct_competitors: StringArraySchema,
+        indirect_competitors: StringArraySchema,
+        manual_alternatives: StringArraySchema,
+        comparison_pages: StringArraySchema,
+        differentiators: StringArraySchema,
+        category_norms: StringArraySchema,
+        research_needed: StringArraySchema
+      })
+      .strict()
+  })
+  .strict();
+
+type ExternalResearchOutput = Pick<
+  BrandExtractionJson,
+  "external_customer_research_plan" | "competitor_intelligence"
+>;
 
 function compact(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
-export async function runExternalResearchAgent(
+function buildFallbackExternalResearch(
   extraction: BrandExtractionJson
-): Promise<Pick<BrandExtractionJson, "external_customer_research_plan" | "competitor_intelligence">> {
-  await readFile(
-    path.join(process.cwd(), "src", "prompts", "external-research-agent.md"),
-    "utf8"
-  ).catch(() => "");
-
+): ExternalResearchOutput {
   const brand = extraction.brand_identity.brand_name;
   const category =
     extraction.brand_identity.category !== "unknown"
@@ -75,4 +110,69 @@ export async function runExternalResearchAgent(
       ])
     }
   };
+}
+
+export async function runExternalResearchAgent(
+  extraction: BrandExtractionJson
+): Promise<ExternalResearchOutput> {
+  const prompt = await readFile(
+    path.join(process.cwd(), "src", "prompts", "external-research-agent.md"),
+    "utf8"
+  ).catch(() => "");
+  const fallback = buildFallbackExternalResearch(extraction);
+  let aiOutput: unknown = null;
+
+  try {
+    aiOutput = await requestStructuredJson(
+      prompt,
+      {
+        brand_identity: extraction.brand_identity,
+        offer_dna: extraction.offer_dna,
+        messaging_foundation: extraction.messaging_foundation,
+        customer_dna_from_website: extraction.customer_dna_from_website,
+        proof_library: extraction.proof_library,
+        competitor_intelligence: extraction.competitor_intelligence,
+        rules: {
+          do_not_invent_external_findings: true,
+          return_research_targets_only_when_sources_are_unavailable: true,
+          model_should_be_deepseek_via_openrouter: true
+        }
+      },
+      "EXTERNAL_RESEARCH_AGENT_JSON",
+      inferJsonSchema(fallback)
+    );
+  } catch (error) {
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "external research agent openrouter request failed"
+    );
+
+    if (isOpenRouterConfigured()) {
+      throw error;
+    }
+  }
+
+  if (aiOutput) {
+    const parsed = ExternalResearchOutputSchema.safeParse(aiOutput);
+
+    if (parsed.success) {
+      return parsed.data as ExternalResearchOutput;
+    }
+
+    logger.error(
+      {
+        errors: parsed.error.issues.map((issue) => {
+          const path = issue.path.length > 0 ? issue.path.join(".") : "root";
+          return `${path}: ${issue.message}`;
+        })
+      },
+      "external research agent returned invalid json"
+    );
+
+    if (isOpenRouterConfigured()) {
+      throw new Error("External Research Agent returned invalid JSON.");
+    }
+  }
+
+  return fallback;
 }

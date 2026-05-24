@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { logger } from "@/lib/logging/logger";
 import { BrandExtractionSchema } from "@/lib/schema/brand-extraction";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -8,11 +9,18 @@ export function resolveOpenRouterModel() {
   return process.env.OPENROUTER_MODEL ?? DEFAULT_OPENROUTER_MODEL;
 }
 
-export async function requestBrandExtractionJson(
+export function isOpenRouterConfigured() {
+  return Boolean(process.env.OPENROUTER_API_KEY);
+}
+
+export async function requestStructuredJson(
   systemPrompt: string,
-  userPayload: unknown
+  userPayload: unknown,
+  schemaName: string,
+  schema: Record<string, unknown>
 ) {
   if (!process.env.OPENROUTER_API_KEY) {
+    logger.warn({ schemaName }, "openrouter api key is not configured; skipping model request");
     return null;
   }
 
@@ -25,9 +33,18 @@ export async function requestBrandExtractionJson(
       "X-Title": process.env.OPENROUTER_APP_NAME ?? "BetterYourAds"
     }
   });
+  const model = resolveOpenRouterModel();
+
+  logger.info(
+    {
+      model,
+      schemaName
+    },
+    "starting openrouter structured json request"
+  );
 
   const response = await client.chat.completions.create({
-    model: resolveOpenRouterModel(),
+    model,
     messages: [
       {
         role: "system",
@@ -42,20 +59,72 @@ export async function requestBrandExtractionJson(
     response_format: {
       type: "json_schema",
       json_schema: {
-        name: "BRAND_EXTRACTION_JSON",
+        name: schemaName,
         strict: true,
-        schema: zodShapeToJsonSchemaShape()
+        schema
       }
     }
   });
 
   const content = response.choices[0]?.message.content;
 
+  logger.info(
+    {
+      model,
+      schemaName,
+      finishReason: response.choices[0]?.finish_reason,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens
+    },
+    "finished openrouter structured json request"
+  );
+
   if (!content) {
     return null;
   }
 
   return JSON.parse(content) as unknown;
+}
+
+export async function requestBrandExtractionJson(
+  systemPrompt: string,
+  userPayload: unknown
+) {
+  return requestStructuredJson(
+    systemPrompt,
+    userPayload,
+    "BRAND_EXTRACTION_JSON",
+    zodShapeToJsonSchemaShape()
+  );
+}
+
+export function inferJsonSchema(value: unknown): Record<string, unknown> {
+  if (typeof value === "string") {
+    return { type: "string" };
+  }
+
+  if (Array.isArray(value)) {
+    return { type: "array", items: {} };
+  }
+
+  if (value && typeof value === "object") {
+    const properties: Record<string, unknown> = {};
+    const required: string[] = [];
+
+    for (const [key, child] of Object.entries(value)) {
+      properties[key] = inferJsonSchema(child);
+      required.push(key);
+    }
+
+    return {
+      type: "object",
+      additionalProperties: false,
+      properties,
+      required
+    };
+  }
+
+  return {};
 }
 
 function zodShapeToJsonSchemaShape() {
@@ -233,33 +302,4 @@ function zodShapeToJsonSchemaShape() {
   });
 
   return inferJsonSchema(empty);
-}
-
-function inferJsonSchema(value: unknown): Record<string, unknown> {
-  if (typeof value === "string") {
-    return { type: "string" };
-  }
-
-  if (Array.isArray(value)) {
-    return { type: "array", items: {} };
-  }
-
-  if (value && typeof value === "object") {
-    const properties: Record<string, unknown> = {};
-    const required: string[] = [];
-
-    for (const [key, child] of Object.entries(value)) {
-      properties[key] = inferJsonSchema(child);
-      required.push(key);
-    }
-
-    return {
-      type: "object",
-      additionalProperties: false,
-      properties,
-      required
-    };
-  }
-
-  return {};
 }

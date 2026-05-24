@@ -7,7 +7,11 @@ import {
   EMPTY_BRAND_EXTRACTION,
   type BrandExtractionJson
 } from "@/lib/schema/brand-extraction";
-import { requestBrandExtractionJson } from "@/lib/agents/openrouter-json";
+import {
+  isOpenRouterConfigured,
+  requestBrandExtractionJson
+} from "@/lib/agents/openrouter-json";
+import { logger } from "@/lib/logging/logger";
 import { validateBrandExtractionJson } from "@/lib/validators/json-validator";
 
 function unique<T>(values: T[]) {
@@ -359,12 +363,36 @@ export async function runWebsiteBrandDnaAgent(
     }
   };
 
-  const aiOutput = await requestBrandExtractionJson(prompt, modelInput).catch(() => null);
+  let aiOutput: unknown = null;
+
+  try {
+    aiOutput = await requestBrandExtractionJson(prompt, modelInput);
+  } catch (error) {
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "website brand dna agent openrouter request failed"
+    );
+
+    if (isOpenRouterConfigured()) {
+      throw error;
+    }
+  }
 
   if (aiOutput) {
     const validation = validateBrandExtractionJson(aiOutput);
     if (validation.ok) {
       return validation.data;
+    }
+
+    logger.error(
+      { errors: validation.errors },
+      "website brand dna agent returned invalid json"
+    );
+
+    if (isOpenRouterConfigured()) {
+      throw new Error(
+        `Website Brand DNA Agent returned invalid JSON: ${validation.errors.join("; ")}`
+      );
     }
   }
 

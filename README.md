@@ -26,7 +26,8 @@ This repository intentionally does not include:
 - Node.js backend modules
 - PostgreSQL helper with raw SQL, no Prisma
 - Zod schema validation
-- Playwright crawling and screenshots
+- Homepage screenshot capture with Playwright
+- Fast HTML crawling for the rest of the website
 - Cheerio HTML parsing
 - OpenRouter extraction agent when `OPENROUTER_API_KEY` is configured
 - DeepSeek V4 Flash as the default OpenRouter model
@@ -78,9 +79,16 @@ OPENROUTER_APP_NAME=BetterYourAds
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/betteryourads
 MAX_CRAWL_PAGES=18
 CRAWL_TIMEOUT_MS=15000
+CRAWL_SCREENSHOT_PAGES=homepage
 ```
 
 `OPENROUTER_API_KEY` is optional. Without it, the deterministic fallback extractor still returns valid JSON, but the extraction will be less nuanced.
+
+`CRAWL_SCREENSHOT_PAGES` controls screenshot cost:
+
+- `homepage`: screenshot only the homepage, then crawl the rest with fast HTML fetch. This is the default.
+- `all`: use Playwright screenshots for every crawled page. Slower.
+- `none`: skip screenshots and use HTML fetch only. Fastest, but weaker visual extraction.
 
 Recommended OpenRouter models:
 
