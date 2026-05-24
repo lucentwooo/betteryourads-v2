@@ -27,7 +27,8 @@ This repository intentionally does not include:
 - PostgreSQL helper with raw SQL, no Prisma
 - Zod schema validation
 - Homepage screenshot capture with Playwright
-- Fast HTML crawling for the rest of the website
+- Agentic crawl planning for the rest of the website
+- Fast HTML fetching for selected non-homepage pages
 - Cheerio HTML parsing
 - OpenRouter extraction agent when `OPENROUTER_API_KEY` is configured
 - DeepSeek V4 Flash as the default OpenRouter model
@@ -80,6 +81,8 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/betteryourads
 MAX_CRAWL_PAGES=18
 CRAWL_TIMEOUT_MS=15000
 CRAWL_SCREENSHOT_PAGES=homepage
+CRAWL_MODE=agentic
+CRAWL_AGENT_PLANNER=deterministic
 ```
 
 `OPENROUTER_API_KEY` is optional. Without it, the deterministic fallback extractor still returns valid JSON, but the extraction will be less nuanced.
@@ -89,6 +92,16 @@ CRAWL_SCREENSHOT_PAGES=homepage
 - `homepage`: screenshot only the homepage, then crawl the rest with fast HTML fetch. This is the default.
 - `all`: use Playwright screenshots for every crawled page. Slower.
 - `none`: skip screenshots and use HTML fetch only. Fastest, but weaker visual extraction.
+
+`CRAWL_MODE` controls page discovery:
+
+- `agentic`: fetch the homepage first, score discovered links by extraction value, then crawl the best pricing, product, proof, security, comparison, FAQ, integration, and about pages. This is the default.
+- `fifo`: older queue behaviour that crawls relevant links in discovery order.
+
+`CRAWL_AGENT_PLANNER` controls whether the crawl planner itself calls a model:
+
+- `deterministic`: use local scoring for speed and predictable cost. This is the default.
+- `openrouter`: ask the Website Research Planner Agent, via the configured OpenRouter model, to choose from the locally discovered candidate URLs. The agent cannot invent URLs.
 
 Recommended OpenRouter models:
 

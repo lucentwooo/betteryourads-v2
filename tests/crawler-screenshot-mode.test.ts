@@ -33,6 +33,7 @@ describe("crawler screenshot mode", () => {
   it("records fetch-only failures instead of rejecting the crawl", async () => {
     const result = await crawlWebsite("http://127.0.0.1:1", {
       maxPages: 1,
+      mode: "agentic",
       screenshotPages: "none",
       timeoutMs: 100
     });

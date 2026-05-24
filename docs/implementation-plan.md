@@ -5,6 +5,7 @@
 - Build strict `BRAND_EXTRACTION_JSON` schema.
 - Implement crawler modules:
   - crawler
+  - crawl planner with deterministic scoring and optional OpenRouter planner agent
   - page classifier
   - content cleaner
   - screenshot extractor, homepage-only by default

@@ -8,6 +8,10 @@ import { extractAssets } from "@/lib/crawler/asset-extractor";
 import { extractColorsFromHtml } from "@/lib/crawler/colour-extractor";
 import { extractMetadata } from "@/lib/crawler/metadata-extractor";
 import { classifyPage, isRelevantPublicPage } from "@/lib/crawler/page-classifier";
+import {
+  planNextCrawlTargets,
+  planNextCrawlTargetsWithAgent
+} from "@/lib/crawler/crawl-planner";
 import { capturePageScreenshot } from "@/lib/crawler/screenshot-extractor";
 import type { CrawlResult, CrawledPage } from "@/lib/crawler/types";
 
@@ -15,6 +19,7 @@ export type CrawlOptions = {
   maxPages?: number;
   timeoutMs?: number;
   screenshotPages?: "homepage" | "all" | "none";
+  mode?: "agentic" | "fifo";
 };
 
 export function resolveScreenshotPages(
@@ -220,6 +225,7 @@ export async function crawlWebsite(
   const timeoutMs = options.timeoutMs ?? Number(process.env.CRAWL_TIMEOUT_MS ?? 15000);
   const screenshotPages =
     options.screenshotPages ?? resolveScreenshotPages(process.env.CRAWL_SCREENSHOT_PAGES);
+  const mode = options.mode ?? (process.env.CRAWL_MODE === "fifo" ? "fifo" : "agentic");
   const normalizedUrl = normalizeWebsiteUrl(websiteUrl);
   const queue = [normalizedUrl];
   const visited = new Set<string>();
@@ -257,11 +263,23 @@ export async function crawlWebsite(
       continue;
     }
 
-    const relevantLinks = page.links
-      .filter((link) => !visited.has(link))
-      .filter((link) => isRelevantPublicPage(link, normalizedUrl));
+    if (mode === "agentic") {
+      const remainingSlots = maxPages - pages.length;
+      const maxTargets = Math.min(remainingSlots, 8);
+      const plannedTargets = (
+        isOpenRouterPlannerEnabled()
+          ? await planNextCrawlTargetsWithAgent(pages, normalizedUrl, visited, maxTargets)
+          : planNextCrawlTargets(pages, normalizedUrl, visited, maxTargets)
+      ).map((target) => target.url);
 
-    queue.push(...relevantLinks);
+      queue.splice(0, queue.length, ...plannedTargets);
+    } else {
+      const relevantLinks = page.links
+        .filter((link) => !visited.has(link))
+        .filter((link) => isRelevantPublicPage(link, normalizedUrl));
+
+      queue.push(...relevantLinks);
+    }
   }
 
   return {
@@ -270,4 +288,8 @@ export async function crawlWebsite(
     pages,
     errors
   };
+}
+
+function isOpenRouterPlannerEnabled() {
+  return process.env.CRAWL_AGENT_PLANNER === "openrouter";
 }
