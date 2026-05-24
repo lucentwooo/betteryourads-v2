@@ -1,0 +1,176 @@
+{
+  "brand_identity": {
+    "brand_name": "Example SaaS",
+    "product_name": "Example SaaS",
+    "website_url": "https://example-saas.com/",
+    "landing_page_url": "https://example-saas.com/",
+    "category": "unknown",
+    "one_line_description": "Project visibility software for growing teams.",
+    "primary_customer": "unknown",
+    "primary_industry": "unknown",
+    "primary_role": "unknown",
+    "primary_outcome": "Project visibility software for growing teams.",
+    "positioning_statement": "Project visibility software for growing teams.",
+    "confidence": "medium"
+  },
+  "visual_brand_system": {
+    "logos": [],
+    "colors": {
+      "primary": ["#2563eb"],
+      "secondary": [],
+      "accent": [],
+      "neutral": [],
+      "background": ["#ffffff"],
+      "text": ["#111111"],
+      "cta": []
+    },
+    "typography": {
+      "font_families": [],
+      "heading_style": "unknown",
+      "body_style": "unknown",
+      "button_style": "unknown",
+      "casing_style": "unknown"
+    },
+    "ui_style": {
+      "button_style": "unknown",
+      "card_style": "unknown",
+      "corner_radius": "unknown",
+      "border_style": "unknown",
+      "shadow_style": "unknown",
+      "icon_style": "unknown",
+      "illustration_style": "unknown",
+      "screenshot_style": "unknown",
+      "spacing_style": "unknown",
+      "layout_style": "unknown",
+      "overall_mood": "unknown"
+    }
+  },
+  "product_representation": {
+    "screenshots": [],
+    "dashboard_visuals": [],
+    "feature_visuals": [],
+    "workflow_visuals": [],
+    "integration_visuals": [],
+    "recommended_ad_visuals": [],
+    "visuals_to_avoid": []
+  },
+  "offer_dna": {
+    "product": "Example SaaS",
+    "main_problem_solved": "unknown",
+    "main_promise": "Project visibility software for growing teams.",
+    "main_use_case": "unknown",
+    "target_customer": "unknown",
+    "target_industry": "unknown",
+    "target_role": "unknown",
+    "key_features": [],
+    "key_benefits": [],
+    "pricing_model": "unknown",
+    "plans": [],
+    "free_trial": "unknown",
+    "demo_available": "available",
+    "entry_offer": "unknown",
+    "primary_cta": "Book a demo",
+    "secondary_cta": "unknown",
+    "sales_motion": "demo-led",
+    "risk_reversal": "unknown",
+    "guarantee": "unknown",
+    "onboarding_promise": "unknown",
+    "time_to_value": "unknown",
+    "integrations": [],
+    "main_differentiator": "unknown"
+  },
+  "messaging_foundation": {
+    "homepage_headline": "Project visibility software for growing teams.",
+    "homepage_subheadline": "unknown",
+    "value_props": [],
+    "features": [],
+    "benefits": [],
+    "use_cases": [],
+    "customer_segments": [],
+    "pain_points_mentioned": [],
+    "outcomes_mentioned": [],
+    "objections_addressed": [],
+    "faq_themes": [],
+    "cta_language": ["Book a demo"],
+    "repeated_phrases": [],
+    "headline_patterns": [],
+    "tone_notes": []
+  },
+  "proof_library": {
+    "customer_logos": [],
+    "testimonials": [],
+    "case_study_metrics": [],
+    "roi_claims": [],
+    "usage_numbers": [],
+    "review_ratings": [],
+    "security_badges": [],
+    "press_mentions": [],
+    "awards": [],
+    "safe_ad_proof_points": []
+  },
+  "customer_dna_from_website": {
+    "brand_claims_about_customers": [],
+    "real_customer_quotes": [],
+    "pains": [],
+    "desired_outcomes": [],
+    "objections": [],
+    "buying_triggers": [],
+    "alternatives": [],
+    "decision_criteria": [],
+    "exact_phrases": []
+  },
+  "external_customer_research_plan": {
+    "recommended_subreddits": ["r/SaaS searches for SaaS"],
+    "review_sites": ["G2", "Capterra", "Product Hunt", "TrustRadius"],
+    "communities": ["LinkedIn posts and comments from category buyers"],
+    "search_queries": ["\"Example SaaS\" reviews", "\"Example SaaS\" alternatives"],
+    "competitor_review_targets": ["G2 category pages for SaaS"],
+    "what_to_extract": ["Repeated customer pain points"]
+  },
+  "competitor_intelligence": {
+    "direct_competitors": [],
+    "indirect_competitors": [],
+    "manual_alternatives": [],
+    "comparison_pages": [],
+    "differentiators": [],
+    "category_norms": ["Review category landing pages before claiming category-level norms."],
+    "research_needed": ["No external competitor findings are invented by this agent."]
+  },
+  "claim_constraints": {
+    "allowed_claims": ["Project visibility software for growing teams."],
+    "claims_requiring_proof": [],
+    "unsupported_claims": [],
+    "forbidden_claims": ["Do not invent customer logos, metrics, testimonials, pricing, guarantees, certifications, or competitor comparisons."],
+    "required_disclaimers": [],
+    "correct_terms": ["Example SaaS"],
+    "terms_to_avoid": [],
+    "compliance_notes": []
+  },
+  "static_ad_creative_recommendations": {
+    "best_customer_segment": "unknown",
+    "best_pain_point": "unknown",
+    "best_desired_outcome": "Project visibility software for growing teams.",
+    "best_proof_point": "unknown",
+    "best_product_visual": "unknown",
+    "best_cta": "Book a demo",
+    "best_visual_metaphor": "unknown",
+    "best_layout_direction": "unknown",
+    "best_background_treatment": "unknown",
+    "best_logo_placement": "unknown",
+    "negative_constraints": [],
+    "ad_concepts": []
+  },
+  "missing_information": {
+    "must_ask_client": [],
+    "nice_to_have": [],
+    "not_found_on_website": []
+  },
+  "source_map": [
+    {
+      "field": "messaging_foundation.homepage_headline",
+      "value": "Project visibility software for growing teams.",
+      "source_url": "https://example-saas.com/",
+      "confidence": "high"
+    }
+  ]
+}

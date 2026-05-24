@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://betteryourads.local/schemas/brand-extraction.schema.json",
+  "title": "BRAND_EXTRACTION_JSON",
+  "description": "Strict output contract used by BetterYourAds Website DNA extraction. The runtime source of truth is src/lib/schema/brand-extraction.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "brand_identity",
+    "visual_brand_system",
+    "product_representation",
+    "offer_dna",
+    "messaging_foundation",
+    "proof_library",
+    "customer_dna_from_website",
+    "external_customer_research_plan",
+    "competitor_intelligence",
+    "claim_constraints",
+    "static_ad_creative_recommendations",
+    "missing_information",
+    "source_map"
+  ]
+}
